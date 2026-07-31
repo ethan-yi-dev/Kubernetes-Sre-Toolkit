@@ -1,0 +1,28 @@
+# Incident 02: Block all ingress traffic to Redis
+# This manifest intentionally isolates Redis for networking/debug exercises.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-deny-ingress
+  namespace: sre-lab
+  labels:
+    app: redis
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+    - Ingress
+  ingress: []
+    # - from:
+    #     - podSelector:
+    #         matchLabels:
+    #           app: redis-client
+    #     - podSelector:
+    #         matchLabels:
+    #           app: netshoot
+
+    #   ports:
+    #     - protocol: TCP
+    #       port: 6379

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sre-lab
+  labels:
+    project: sre-debugging-lab
+    tier: application

@@ -1,0 +1,22 @@
+# Kind cluster configuration for SRE Debugging Lab
+# Optimized for Cilium CNI
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  disableDefaultCNI: true      # Required: We'll install Cilium manually
+  podSubnet: 192.168.0.0/16    # Cilium default pod CIDR
+  serviceSubnet: 10.96.0.0/16  # Default service CIDR
+nodes:
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+- role: worker
+  labels:
+    node-role: worker
+- role: worker
+  labels:
+    node-role: worker

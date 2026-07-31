@@ -1,0 +1,42 @@
+# Redis Client - lightweight workload to simulate app dependency on Redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-client
+  namespace: sre-lab
+  labels:
+    app: redis-client
+    tier: client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-client
+  template:
+    metadata:
+      labels:
+        app: redis-client
+        tier: client
+    spec:
+      containers:
+      - name: redis-client
+        image: redis:7-alpine
+        command:
+        - /bin/sh
+        - -c
+        args:
+        - |
+          while true; do
+            ts="$(date '+%Y-%m-%dT%H:%M:%S%z')"
+            output="$(redis-cli -h redis -p 6379 ping 2>&1)" && status="OK" || status="ERR"
+            echo "$ts [$status] $output"
+            sleep 5
+          done
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi

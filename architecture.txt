@@ -1,0 +1,20 @@
+                   +------------------+
+                   | health_check.sh  |
+                   +--------+---------+
+                            |
+                            |
+                     kubectl get svc
+                            |
+          +-----------------+-----------------+
+          |                                   |
+    Service nginx                     Service redis
+          |                                   |
+     Check Endpoints                  Check Endpoints
+          |                                   |
+     Check Pod Ready                  Check Pod Ready
+          |                                   |
+       nc Service                       nc Service
+          |                                   |
+          +-----------------+-----------------+
+                            |
+                      JSON Report

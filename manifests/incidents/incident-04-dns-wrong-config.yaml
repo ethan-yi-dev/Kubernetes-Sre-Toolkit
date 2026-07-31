@@ -1,0 +1,26 @@
+# Incident 04: Pod with wrong DNS policy
+# The pod uses dnsPolicy: Default (host DNS) instead of ClusterFirst,
+# so it cannot resolve cluster-internal service names like "nginx" or "redis".
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broken-dns-pod
+  namespace: sre-lab
+  labels:
+    app: broken-dns
+spec:
+  dnsPolicy: Default
+  containers:
+  - name: netshoot
+    image: nicolaka/netshoot:latest
+    command:
+    - sleep
+    - "infinity"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi

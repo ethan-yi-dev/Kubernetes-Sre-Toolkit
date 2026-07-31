@@ -1,0 +1,133 @@
+# Nginx Frontend - Web Tier
+# Serves a simple page that displays Redis connectivity status
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: sre-lab
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name localhost;
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+        }
+
+        location /health {
+            return 200 'OK';
+            add_header Content-Type text/plain;
+        }
+    }
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>SRE Lab - Happy Path</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; background: #1a1a2e; color: #eee; }
+            .container { max-width: 800px; margin: 0 auto; }
+            h1 { color: #4ecca3; }
+            .status { padding: 20px; border-radius: 8px; margin: 20px 0; }
+            .healthy { background: #16213e; border-left: 4px solid #4ecca3; }
+            .info { background: #16213e; border-left: 4px solid #0f3460; padding: 15px; margin: 10px 0; }
+            code { background: #0f3460; padding: 2px 6px; border-radius: 4px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🎯 SRE Debugging Lab</h1>
+            <div class="status healthy">
+                <h2>✅ Cluster Status: Healthy</h2>
+                <p>All systems operational. Network connectivity verified.</p>
+            </div>
+            <div class="info">
+                <h3>Architecture</h3>
+                <p><code>Nginx (frontend)</code> → <code>Redis (backend)</code></p>
+                <p>CNI: Cilium | Orchestrator: kind</p>
+            </div>
+            <div class="info">
+                <h3>Debug Commands</h3>
+                <p>Access debug pod: <code>kubectl exec -it -n sre-lab netshoot -- bash</code></p>
+                <p>Test Redis: <code>nc -zv redis 6379</code></p>
+                <p>Test Nginx: <code>curl nginx</code></p>
+            </div>
+        </div>
+    </body>
+    </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: sre-lab
+  labels:
+    app: nginx
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+        tier: frontend
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25-alpine
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+        - name: nginx-config
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 20
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: sre-lab
+  labels:
+    app: nginx
+    tier: frontend
+spec:
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
+    name: http
+  type: ClusterIP

@@ -1,0 +1,71 @@
+# Lightweight overrides for kube-prometheus-stack on a kind cluster.
+#
+# Defaults assume a real cluster with persistent storage and several GB of
+# free RAM. On a kind cluster running inside Docker Desktop on a student
+# laptop, those defaults can OOM-kill workloads. This values file:
+#
+#   - Disables persistence (Prometheus, Grafana, Alertmanager all use
+#     emptyDir, so data is lost on pod restart — fine for a lab).
+#   - Trims Prometheus retention to 6h to keep its on-disk footprint small.
+#   - Lowers CPU / memory requests so everything fits next to the lab pods.
+#   - Sets a known Grafana admin password so students don't have to extract
+#     it from a Secret.
+#   - Keeps every Service ClusterIP — students reach the UIs with
+#     `kubectl port-forward`, which works the same on macOS and Windows.
+
+grafana:
+  adminUser: admin
+  adminPassword: admin
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 200Mi
+    limits:
+      memory: 400Mi
+  # Keep the bundled Kubernetes dashboards — that's the main reason to use
+  # this chart for a teaching lab.
+  defaultDashboardsEnabled: true
+
+prometheus:
+  prometheusSpec:
+    retention: 6h
+    # storageSpec is left empty so Prometheus uses an emptyDir volume.
+    # No PVCs, no StorageClass dependency.
+    storageSpec: {}
+    resources:
+      requests:
+        cpu: 200m
+        memory: 400Mi
+      limits:
+        memory: 1Gi
+    # Discover ServiceMonitors / PodMonitors from any namespace so the lab
+    # can later add monitors for its own workloads without editing values.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 100Mi
+    limits:
+      memory: 200Mi
+
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+    storage: {}
+
+# Node exporter and kube-state-metrics stay on with their chart defaults —
+# they're cheap and provide most of the data the bundled dashboards plot.

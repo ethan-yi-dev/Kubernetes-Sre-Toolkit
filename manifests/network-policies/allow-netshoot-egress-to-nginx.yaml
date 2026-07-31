@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-netshoot-egress-to-nginx
+  namespace: sre-lab
+
+spec:
+  podSelector:
+    matchLabels:
+      app: netshoot
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: nginx
+
+      ports:
+        - protocol: TCP
+          port: 80

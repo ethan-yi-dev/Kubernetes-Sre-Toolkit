@@ -1,0 +1,32 @@
+# Netshoot Debug Pod
+# A powerful network troubleshooting container with common tools pre-installed
+# Tools include: curl, wget, ping, traceroute, tcpdump, netcat, dig, nslookup, etc.
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: netshoot
+  namespace: sre-lab
+  labels:
+    app: netshoot
+    tier: debug
+spec:
+  containers:
+  - name: netshoot
+    image: nicolaka/netshoot:latest
+    command:
+    - sleep
+    - "infinity"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    securityContext:
+      capabilities:
+        add:
+        - NET_ADMIN
+        - NET_RAW
+  restartPolicy: Always

@@ -1,0 +1,19 @@
+# Incident 01: Nginx Service targetPort misconfiguration
+# This manifest intentionally breaks service routing for the exercise.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: sre-lab
+  labels:
+    app: nginx
+    tier: frontend
+spec:
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+  type: ClusterIP
