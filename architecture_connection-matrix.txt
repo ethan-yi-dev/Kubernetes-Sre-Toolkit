@@ -1,0 +1,38 @@
+                  ┌──────────────────────┐
+                  │   connectivity.json  │
+                  │ expected flow spec   │
+                  └──────────┬───────────┘
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │     conn_test.py     │
+                  │ parse + validate     │
+                  │ compare expectation  │
+                  └──────────┬───────────┘
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │      kubectl         │
+                  │ get pods / exec      │
+                  └──────────┬───────────┘
+                             │
+                             ▼
+        ┌────────────────────────────────────────┐
+        │          Source Pod / netshoot         │
+        │                                        │
+        │  nc          curl          nslookup    │
+        └──────┬─────────┬──────────────┬────────┘
+               │         │              │
+               ▼         ▼              ▼
+          TCP Service  HTTP Service   CoreDNS
+          redis:6379   nginx:80       DNS lookup
+               │         │
+               ▼         ▼
+          Destination Pods / Services
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │    JSON report       │
+                  │ actual vs expected   │
+                  │ summary + exit code  │
+                  └──────────────────────┘

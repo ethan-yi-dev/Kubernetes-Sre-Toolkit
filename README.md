@@ -41,20 +41,38 @@ Example:
 
 ---
 
-### Connectivity Matrix *(Coming Soon)*
+### Connectivity Matrix
 
-Generate a namespace-wide connectivity matrix between workloads.
+Verify expected network connectivity against the live Kubernetes cluster.
 
-Planned features:
+Features:
 
-- Pod-to-Pod connectivity
-- Service reachability
-- NetworkPolicy validation
-- JSON and table output
+- Read connectivity tests from a JSON specification
+- Execute TCP (`nc`), HTTP (`curl`), and DNS (`nslookup`) checks from a source Pod
+- Compare actual connectivity with expected results
+- Generate structured JSON reports and return appropriate exit codes
+
+Run the connectivity tests with:
+
+```bash
+python3 scripts/conn_test.py specs/connectivity.json
+```
+
+On Windows, you may need to use:
+
+```bash
+python scripts/conn_test.py specs/connectivity.json
+```
+
+The command exits with:
+
+- `0` when all actual results match expectations
+- `1` when one or more tests do not match expectations
+- `2` when the specification or command arguments are invalid
 
 ---
 
-### Incident Detector *(Coming Soon)*
+### Incident Detector _(Coming Soon)_
 
 Automatically detect common Kubernetes networking failures.
 
@@ -72,48 +90,74 @@ Planned checks:
 ## Architecture
 
 ```
-                 health_check.sh
-                        |
-              Discover Services
-                        |
-                For each Service
-                        |
-            +-----------+-----------+
-            |                       |
-      Find backing Pods       Check Endpoints
-            |
-      Check Pod Ready
-            |
- kubectl exec netshoot -- nc
-            |
-        TCP Connectivity
-            |
-        JSON Health Report
+                        +----------------------+
+                        |     Local Machine    |
+                        |----------------------|
+                        | kubectl / k9s        |
+                        | health_check.sh      |
+                        | conn_test.py         |
+                        | incident_detector.py |
+                        +----------+-----------+
+                                   |
+                                   | kubectl
+                                   |
+                    +--------------v---------------+
+                    |        kind Kubernetes       |
+                    |           Cluster            |
+                    +--------------+---------------+
+                                   |
+                          Namespace: sre-lab
+                                   |
+        +--------------------------+--------------------------+
+        |                          |                          |
+        |                          |                          |
++-------v--------+        +--------v--------+        +--------v--------+
+|    netshoot    |        |     Service     |        |     Service     |
+| (test client)  |------->|      nginx      |------->|      redis      |
++----------------+        +--------+--------+        +--------+--------+
+                                    |                          |
+                              +-----+-----+                    |
+                              |           |                    |
+                       +------v----+ +----v------+       +-----v------+
+                       | nginx Pod | | nginx Pod |       | redis Pod  |
+                       +-----------+ +-----------+       +------------+
+
+                CoreDNS provides in-cluster DNS resolution
 ```
 
 ---
 
 ## Prerequisites
 
-- Kubernetes cluster
-- `kubectl`
-- Bash
-- A test Pod with `nc` installed (default: `netshoot`)
+- Docker
+- kind
+- kubectl
+- k9s (optional)
 
----
+Verify the cluster is reachable.
+
+```bash
+kubectl get nodes
+```
 
 ## Setup
 
-Clone the repository and make the scripts executable.
+Make the scripts executable.
 
 ```bash
 chmod +x scripts/*.sh
 ```
 
-Verify cluster connectivity.
+Create the demo topology.
 
 ```bash
-kubectl get nodes
+./scripts/setup.sh
+```
+
+Validate the environment.
+
+```bash
+./scripts/check.sh
 ```
 
 ---
@@ -136,7 +180,7 @@ Example:
 
 ---
 
-### Connectivity Matrix *(Coming Soon)*
+### Connectivity Matrix _(Coming Soon)_
 
 ```bash
 ./scripts/connectivity_matrix.sh <namespace>
@@ -144,7 +188,7 @@ Example:
 
 ---
 
-### Incident Detector *(Coming Soon)*
+### Incident Detector _(Coming Soon)_
 
 ```bash
 ./scripts/incident_detector.sh <namespace>
@@ -175,30 +219,30 @@ Example:
 
 Exit codes:
 
-| Code | Meaning |
-|------|---------|
-| 0 | All Services are healthy |
-| 1 | One or more health checks failed |
-| 2 | Invalid arguments or environment |
+| Code | Meaning                          |
+| ---- | -------------------------------- |
+| 0    | All Services are healthy         |
+| 1    | One or more health checks failed |
+| 2    | Invalid arguments or environment |
 
 ---
 
 ## Troubleshooting
 
-| Reason | Description |
-|---------|-------------|
-| `no backing pods` | The Service selector does not match any Pods. |
-| `not ready` | One or more backend Pods are not Ready. |
-| `no endpoints` | The Service has no Ready Endpoints. |
+| Reason               | Description                                                                       |
+| -------------------- | --------------------------------------------------------------------------------- |
+| `no backing pods`    | The Service selector does not match any Pods.                                     |
+| `not ready`          | One or more backend Pods are not Ready.                                           |
+| `no endpoints`       | The Service has no Ready Endpoints.                                               |
 | `connection refused` | The Service is reachable but the application is not listening on the target port. |
-| `timeout` | DNS, NetworkPolicy, or routing prevented the TCP connection. |
+| `timeout`            | DNS, NetworkPolicy, or routing prevented the TCP connection.                      |
 
 ---
 
 ## Roadmap
 
 - [x] Health Check
-- [ ] Connectivity Matrix
+- [x] Connectivity Matrix
 - [ ] Incident Detector
 - [ ] JSON Schema documentation
 - [ ] GitHub Actions integration
