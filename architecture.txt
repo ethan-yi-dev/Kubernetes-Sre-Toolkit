@@ -1,20 +1,31 @@
-                   +------------------+
-                   | health_check.sh  |
-                   +--------+---------+
-                            |
-                            |
-                     kubectl get svc
-                            |
-          +-----------------+-----------------+
-          |                                   |
-    Service nginx                     Service redis
-          |                                   |
-     Check Endpoints                  Check Endpoints
-          |                                   |
-     Check Pod Ready                  Check Pod Ready
-          |                                   |
-       nc Service                       nc Service
-          |                                   |
-          +-----------------+-----------------+
-                            |
-                      JSON Report
+                  +----------------------+
+                  |   health_check.sh    |
+                  +----------+-----------+
+                             |
+                    kubectl get services
+                             |
+               Loop through every Service
+                             |
+          +------------------+------------------+
+          |                                     |
+    Service: nginx                       Service: redis
+          |                                     |
+    Read Service selector                Read Service selector
+          |                                     |
+    Find backing Pods                   Find backing Pods
+          |                                     |
+    Check Pod Ready                     Check Pod Ready
+          |                                     |
+    Check Endpoints                     Check Endpoints
+          |                                     |
+          +------------------+------------------+
+                             |
+                 kubectl exec into netshoot
+                             |
+                  nc <service-name> <port>
+                             |
+                 DNS + Service routing + TCP
+                             |
+                      Aggregate results
+                             |
+                        JSON Report

@@ -1,0 +1,33 @@
+# Kubernetes credentials
+.kube/
+kubeconfig
+kubeconfig
+*.key
+*.pem
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+secrets.yaml
+secret.yaml
+*-secret.yaml
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+*.tmp
+
+# Editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated output
+coverage/
+dist/
+build/
