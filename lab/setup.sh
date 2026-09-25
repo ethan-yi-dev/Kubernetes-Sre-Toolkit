@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+LAB_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+MANIFESTS_DIR="$LAB_DIR/manifests"
+
 echo "=========================================="
 echo "  K8s SRE Debugging Lab - Setup Script"
 echo "=========================================="
@@ -40,7 +43,7 @@ create_cluster() {
         return 0
     fi
     
-    kind create cluster --name sre-lab --config kind_config.yaml
+    kind create cluster --name sre-lab --config "$LAB_DIR/kind_config.yaml"
     log_info "Kind cluster created successfully!"
 }
 
@@ -76,19 +79,19 @@ deploy_application() {
     log_info "Deploying lab workloads..."
     
     # Create namespace
-    kubectl apply -f manifests/namespace.yaml
+    kubectl apply -f "$MANIFESTS_DIR/namespace.yaml"
     
     # Deploy Redis backend
-    kubectl apply -f manifests/redis.yaml
+    kubectl apply -f "$MANIFESTS_DIR/redis.yaml"
 
     # Deploy Redis client workload (used for dependency/debugging exercises)
-    kubectl apply -f manifests/redis-client.yaml
+    kubectl apply -f "$MANIFESTS_DIR/redis-client.yaml"
     
     # Deploy Nginx frontend
-    kubectl apply -f manifests/nginx.yaml
+    kubectl apply -f "$MANIFESTS_DIR/nginx.yaml"
     
     # Deploy netshoot debug pod
-    kubectl apply -f manifests/netshoot.yaml
+    kubectl apply -f "$MANIFESTS_DIR/netshoot.yaml"
     
     log_info "Waiting for all pods to be ready..."
     kubectl -n sre-lab wait --for=condition=ready pod --all --timeout=120s
